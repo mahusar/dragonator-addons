@@ -11,7 +11,7 @@ namespace Dragonator.Swapper
 
         public string Key { get { return "swap"; } }
 
-        public string Label { get { return "Monero swap"; } }
+        public string Label { get { return "swapper"; } }
 
         public string PromptText
         {

@@ -40,6 +40,7 @@ namespace Dragonator.Swapper
             if (Num.IsOn(cleaned))
             {
                 Enabled = true;
+                Swapper.Start();
                 RateFeed.EnsureRunning();
                 return true;
             }

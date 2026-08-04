@@ -23,7 +23,11 @@ namespace Dragonator.Swapper
 
         public string DescribeCurrent()
         {
-            return SwapRate.Describe();
+            string trouble = Swapper.Trouble();
+
+            return string.IsNullOrEmpty(trouble)
+                ? SwapRate.Describe()
+                : SwapRate.Describe() + "  —  " + trouble;
         }
 
         public void ApplyDefault()
@@ -58,6 +62,7 @@ namespace Dragonator.Swapper
             }
 
             ManualRate = parsed;
+            Swapper.Start();
             return true;
         }
 
@@ -66,9 +71,9 @@ namespace Dragonator.Swapper
             decimal rate;
             string reason;
 
-            return SwapRate.TryEffective(out rate, out reason)
-                ? "swap=xmr@" + Num.Xst(rate)
-                : "swap=off";
+            if (!SwapRate.TryEffective(out rate, out reason)) return "swap=off";
+
+            return "swap=xmr@" + Num.Xst(rate) + ";swapport=" + SwapServer.Port;
         }
     }
 }

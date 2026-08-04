@@ -58,6 +58,13 @@ namespace Dragonator.Swapper
 
         public static bool TryEffective(out decimal rate, out string reason)
         {
+            if (Configured && !SwapServer.Listening)
+            {
+                rate = 0m;
+                reason = SwapServer.Problem ?? "the swap desk is not listening yet";
+                return false;
+            }
+
             return AutoRateOption.Enabled
                 ? TryAutomatic(out rate, out reason)
                 : TryManual(out rate, out reason);

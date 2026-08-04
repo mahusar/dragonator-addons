@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>MoneroSwapper</AssemblyName>
     <RootNamespace>Dragonator.Swapper</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <LangVersion>9.0</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
@@ -15,6 +15,10 @@
   <PropertyGroup Condition="'$(DragonatorApi)' == ''">
     <DragonatorApi>..\StealthDragons\Library\ScriptAssemblies\Dragonator.Api.dll</DragonatorApi>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="DragonatorApi" Value="1" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Dragonator.Api">

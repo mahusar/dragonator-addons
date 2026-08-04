@@ -1,13 +1,16 @@
-using System.Globalization;
-
 namespace Dragonator.Swapper
 {
-    public class MoneroSwapOption : IServerOption
+    public class MoneroSwapOption : IServerOption, IServerOptionListing
     {
         public const decimal MinimumRate = 0.00000001m;
 
-        public static bool Enabled { get; private set; }
-        public static decimal XstPerXmr { get; private set; }
+        public static decimal ManualRate { get; private set; }
+
+        public int Order { get { return 10; } }
+
+        public bool Ask { get { return true; } }
+
+        public bool Show { get { return true; } }
 
         public string Key { get { return "swap"; } }
 
@@ -20,56 +23,52 @@ namespace Dragonator.Swapper
 
         public string DescribeCurrent()
         {
-            return Enabled ? Format(XstPerXmr) + " XST per XMR" : "no swapping";
+            return SwapRate.Describe();
         }
 
         public void ApplyDefault()
         {
-            Enabled = false;
-            XstPerXmr = 0m;
+            ManualRate = 0m;
         }
 
         public bool TryApply(string input, out string error)
         {
             error = null;
 
-            string cleaned = string.IsNullOrEmpty(input) ? "" : input.Trim();
+            string cleaned = Num.Clean(input);
 
-            if (cleaned.Length == 0 ||
-                cleaned.Equals("off", System.StringComparison.OrdinalIgnoreCase) ||
-                cleaned.Equals("none", System.StringComparison.OrdinalIgnoreCase))
+            if (cleaned.Length == 0 || Num.IsOff(cleaned))
             {
                 ApplyDefault();
                 return true;
             }
 
             decimal parsed;
-            if (!decimal.TryParse(cleaned.Replace(',', '.'), NumberStyles.Number,
-                                  CultureInfo.InvariantCulture, out parsed))
+            if (!Num.TryDecimal(cleaned, out parsed))
             {
-                error = "'" + cleaned + "' is not a number. Use a rate, or 'off'.";
+                error = Num.NotANumber(cleaned) + " Use a rate, or 'off'.";
                 return false;
             }
 
             if (parsed < MinimumRate)
             {
-                error = "The rate must be at least " + Format(MinimumRate) + ", or 'off' for no swapping.";
+                error = "The rate must be at least " + Num.Xst(MinimumRate) +
+                        ", or 'off' for no swapping.";
                 return false;
             }
 
-            Enabled = true;
-            XstPerXmr = parsed;
+            ManualRate = parsed;
             return true;
         }
 
         public string ToWire()
         {
-            return Enabled ? "swap=xmr@" + Format(XstPerXmr) : "swap=off";
-        }
+            decimal rate;
+            string reason;
 
-        private static string Format(decimal value)
-        {
-            return value.ToString("0.########", CultureInfo.InvariantCulture);
+            return SwapRate.TryEffective(out rate, out reason)
+                ? "swap=xmr@" + Num.Xst(rate)
+                : "swap=off";
         }
     }
 }

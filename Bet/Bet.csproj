@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <AssemblyName>Swapper</AssemblyName>
+    <AssemblyName>Bet</AssemblyName>
     <RootNamespace>Dragonator.Addons</RootNamespace>
-    <Version>0.2.0</Version>
+    <Version>0.1.0</Version>
     <LangVersion>9.0</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <DebugType>none</DebugType>
-    <Product>Swapper</Product>
+    <Product>Bet</Product>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 

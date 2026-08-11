@@ -6,7 +6,8 @@ namespace Dragonator.Addons
 {
     internal static class Paths
     {
-        private const string DataFlag = "-swapdata";
+        private const string DataFlag = "-addondata";
+        private const string LegacyDataFlag = "-swapdata";
         private const string SwapsFile = "swaps.txt";
 
         private static string data;
@@ -29,6 +30,7 @@ namespace Dragonator.Addons
         private static string Resolve()
         {
             string given = Args.Value(DataFlag);
+            if (string.IsNullOrEmpty(given)) given = Args.Value(LegacyDataFlag);
             if (!string.IsNullOrEmpty(given)) return given;
 
             try

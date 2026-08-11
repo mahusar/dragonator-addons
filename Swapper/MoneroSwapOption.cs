@@ -8,7 +8,7 @@ namespace Dragonator.Addons
 
         public int Order { get { return 10; } }
 
-        public bool Ask { get { return true; } }
+        public bool Ask { get { return !SwapWallet.Free; } }
 
         public bool Show { get { return true; } }
 

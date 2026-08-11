@@ -1,9 +1,24 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 
 namespace Dragonator.Addons
 {
+    internal class Receipt
+    {
+        public readonly string Address;
+        public readonly decimal Amount;
+        public readonly int Confirmations;
+
+        public Receipt(string address, decimal amount, int confirmations)
+        {
+            Address = address;
+            Amount = amount;
+            Confirmations = confirmations;
+        }
+    }
+
     internal static class Stealth
     {
         public const int ShortestAddress = 26;
@@ -43,6 +58,57 @@ namespace Dragonator.Addons
             if (string.IsNullOrEmpty(result)) throw new SwapRefused("the StealthCoin wallet gave no answer");
 
             return string.Equals(Json.Field(result, "isvalid"), "true", StringComparison.Ordinal);
+        }
+
+        public static string NewAddress()
+        {
+            Load();
+
+            string json = Call("{\"jsonrpc\":\"1.0\",\"id\":\"dragonator\",\"method\":\"getnewaddress\",\"params\":[]}");
+            Refuse(json, "getnewaddress");
+
+            string address = Json.TextOf(Json.Field(json, "result"));
+            if (string.IsNullOrEmpty(address))
+                throw new SwapRefused("the StealthCoin wallet did not return a new address");
+
+            return address;
+        }
+
+        public static List<Receipt> Received(int minConfirmations)
+        {
+            Load();
+
+            string json = Call("{\"jsonrpc\":\"1.0\",\"id\":\"dragonator\",\"method\":\"listreceivedbyaddress\"," +
+                               "\"params\":[" + minConfirmations.ToString(CultureInfo.InvariantCulture) + ",true]}");
+            Refuse(json, "listreceivedbyaddress");
+
+            List<Receipt> rows = new List<Receipt>();
+
+            foreach (string item in Json.Items(json, "result"))
+            {
+                string address = Json.TextOf(Json.Field(item, "address"));
+                if (string.IsNullOrEmpty(address)) continue;
+
+                decimal amount;
+                Json.TryDecimalOf(Json.Field(item, "amount"), out amount);
+
+                long confirmations;
+                Json.TryLongOf(Json.Field(item, "confirmations"), out confirmations);
+
+                rows.Add(new Receipt(address, amount, confirmations < 0 ? 0 : (int)confirmations));
+            }
+
+            return rows;
+        }
+
+        private static void Refuse(string json, string method)
+        {
+            if (string.IsNullOrEmpty(json))
+                throw new SwapRefused("the StealthCoin wallet gave no answer to " + method);
+
+            string error = Json.Field(json, "error");
+            if (!string.IsNullOrEmpty(error) && !string.Equals(error, "null", StringComparison.Ordinal))
+                throw new SwapRefused("the StealthCoin wallet refused " + method + ": " + error);
         }
 
         public static decimal Balance()
@@ -97,7 +163,7 @@ namespace Dragonator.Addons
             }
             catch (Exception)
             {
-                throw new SwapRefused("the swapper cannot read " + ConfigFile);
+                throw new SwapRefused("cannot read " + ConfigFile);
             }
 
             foreach (string line in lines)

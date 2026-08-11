@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 
-namespace Dragonator.Swapper
+namespace Dragonator.Addons
 {
     internal static class Paths
     {

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace Dragonator.Swapper
+namespace Dragonator.Addons
 {
     internal static class Socks5
     {

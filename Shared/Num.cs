@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 
-namespace Dragonator.Swapper
+namespace Dragonator.Addons
 {
     internal static class Num
     {

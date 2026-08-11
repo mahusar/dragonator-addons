@@ -1,4 +1,4 @@
-namespace Dragonator.Swapper
+namespace Dragonator.Addons
 {
     internal static class Swapper
     {

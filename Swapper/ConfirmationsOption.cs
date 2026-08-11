@@ -1,4 +1,4 @@
-namespace Dragonator.Swapper
+namespace Dragonator.Addons
 {
     public class ConfirmationsOption : IServerOption, IServerOptionListing
     {

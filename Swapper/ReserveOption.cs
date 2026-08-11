@@ -1,27 +1,27 @@
-namespace Dragonator.Swapper
+namespace Dragonator.Addons
 {
-    public class MaximumSwapOption : IServerOption, IServerOptionListing
+    public class ReserveOption : IServerOption, IServerOptionListing
     {
         public static decimal Xst { get; private set; }
 
-        public int Order { get { return 70; } }
+        public int Order { get { return 60; } }
 
         public bool Ask { get { return SwapRate.Configured; } }
 
         public bool Show { get { return SwapRate.Configured; } }
 
-        public string Key { get { return "swapmax"; } }
+        public string Key { get { return "swapreserve"; } }
 
-        public string Label { get { return "swap maximum"; } }
+        public string Label { get { return "swap reserve"; } }
 
         public string PromptText
         {
-            get { return "most XST you will pay out in one swap ('none' for no cap)"; }
+            get { return "XST held back for match payouts, never swapped ('none' for no reserve)"; }
         }
 
         public string DescribeCurrent()
         {
-            return Xst <= 0m ? "no cap" : "up to " + Num.Xst(Xst) + " XST";
+            return Xst <= 0m ? "nothing held back" : Num.Xst(Xst) + " XST held back";
         }
 
         public void ApplyDefault()
@@ -50,9 +50,9 @@ namespace Dragonator.Swapper
                 return false;
             }
 
-            if (parsed <= 0m)
+            if (parsed < 0m)
             {
-                error = "A cap of zero would refuse every swap. Use 'none' for no cap.";
+                error = "A reserve cannot be negative.";
                 return false;
             }
 
@@ -60,16 +60,14 @@ namespace Dragonator.Swapper
             return true;
         }
 
-        public static bool Exceeds(decimal payingXst)
+        public static bool Breaches(decimal balanceXst, decimal payingXst)
         {
-            return Xst > 0m && payingXst > Xst;
+            return balanceXst - payingXst < Xst;
         }
 
         public string ToWire()
         {
-            if (!SwapRate.IsOffered) return null;
-
-            return Xst <= 0m ? null : "swapmax=" + Num.Xst(Xst);
+            return null;
         }
     }
 }

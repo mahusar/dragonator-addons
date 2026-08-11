@@ -4,7 +4,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
 
-namespace Dragonator.Swapper
+namespace Dragonator.Addons
 {
     internal static class Https
     {

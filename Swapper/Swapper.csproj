@@ -1,19 +1,25 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <AssemblyName>MoneroSwapper</AssemblyName>
-    <RootNamespace>Dragonator.Swapper</RootNamespace>
+    <AssemblyName>Swapper</AssemblyName>
+    <RootNamespace>Dragonator.Addons</RootNamespace>
     <Version>0.2.0</Version>
     <LangVersion>9.0</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <DebugType>none</DebugType>
-    <Product>MoneroSwapper</Product>
+    <Product>Swapper</Product>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Include="*.cs" />
+    <Compile Include="..\Shared\*.cs" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(DragonatorApi)' == ''">
-    <DragonatorApi>..\StealthDragons\Library\ScriptAssemblies\Dragonator.Api.dll</DragonatorApi>
+    <DragonatorApi>..\..\StealthDragons\Library\ScriptAssemblies\Dragonator.Api.dll</DragonatorApi>
   </PropertyGroup>
 
   <ItemGroup>

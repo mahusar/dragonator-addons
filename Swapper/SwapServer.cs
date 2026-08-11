@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-namespace Dragonator.Swapper
+namespace Dragonator.Addons
 {
     internal static class SwapServer
     {

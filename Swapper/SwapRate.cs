@@ -1,6 +1,6 @@
 using System;
 
-namespace Dragonator.Swapper
+namespace Dragonator.Addons
 {
     public static class SwapRate
     {

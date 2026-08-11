@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 
-namespace Dragonator.Swapper
+namespace Dragonator.Addons
 {
     internal static class Stealth
     {

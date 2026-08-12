@@ -2,7 +2,7 @@
 
 Server add-ons for Dragonator. Each folder here builds one `.dll` that a server
 operator drops into an `Addons` folder. Dragonator itself needs no rebuild and no
-client update — a server that has the file offers the feature, one that does not
+client update a server that has the file offers the feature, one that does not
 behaves exactly as before.
 
 | Add-on | What it does | Needs |

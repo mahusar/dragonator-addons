@@ -8,9 +8,14 @@ behaves exactly as before.
 | Add-on | What it does | Needs |
 |---|---|---|
 | `Bet` | Bets, payouts and refunds | Stealth daemon |
+| `Registry` | Lets players find other servers | Stealth daemon |
 | `Swapper` | Players top up XST with Monero | Stealth daemon and monero-wallet-rpc |
 
 Without `Bet` a server is free to play. Add-ons load on headless servers only.
+
+`Registry` reads the public server list off the Stealth chain, so a player who
+reaches one Dragonator finds the rest. Getting your own server onto that list is
+a one-off command — see `Registry/tools/registry.py` and `Registry/SETUP.md`.
 
 ## Install
 

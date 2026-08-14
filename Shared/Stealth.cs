@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 
 namespace Dragonator.Addons
 {
@@ -55,7 +56,7 @@ namespace Dragonator.Addons
                                "\"params\":[\"" + address + "\"]}");
 
             string result = Json.Field(json, "result");
-            if (string.IsNullOrEmpty(result)) throw new SwapRefused("the StealthCoin wallet gave no answer");
+            if (string.IsNullOrEmpty(result)) throw new SwapRefused("the Stealth wallet gave no answer");
 
             return string.Equals(Json.Field(result, "isvalid"), "true", StringComparison.Ordinal);
         }
@@ -69,7 +70,7 @@ namespace Dragonator.Addons
 
             string address = Json.TextOf(Json.Field(json, "result"));
             if (string.IsNullOrEmpty(address))
-                throw new SwapRefused("the StealthCoin wallet did not return a new address");
+                throw new SwapRefused("the Stealth wallet did not return a new address");
 
             return address;
         }
@@ -104,11 +105,11 @@ namespace Dragonator.Addons
         private static void Refuse(string json, string method)
         {
             if (string.IsNullOrEmpty(json))
-                throw new SwapRefused("the StealthCoin wallet gave no answer to " + method);
+                throw new SwapRefused("the Stealth wallet gave no answer to " + method);
 
             string error = Json.Field(json, "error");
             if (!string.IsNullOrEmpty(error) && !string.Equals(error, "null", StringComparison.Ordinal))
-                throw new SwapRefused("the StealthCoin wallet refused " + method + ": " + error);
+                throw new SwapRefused("the Stealth wallet refused " + method + ": " + error);
         }
 
         public static decimal Balance()
@@ -119,26 +120,68 @@ namespace Dragonator.Addons
 
             decimal balance;
             if (!Json.TryDecimalOf(Json.Field(json, "result"), out balance))
-                throw new SwapRefused("the StealthCoin wallet did not report a balance");
+                throw new SwapRefused("the Stealth wallet did not report a balance");
 
             return balance;
         }
 
+        public const int MaxDataBytes = 48;
+
         public static string Send(string address, decimal amount)
+        {
+            return Send(address, amount, null);
+        }
+
+        public static string Send(string address, decimal amount, List<string> hexData)
         {
             if (!LooksLikeAddress(address)) throw new SwapRefused("refusing to send to a malformed address");
             if (amount <= 0m) throw new SwapRefused("refusing to send a zero amount");
 
             Load();
 
-            string json = Call("{\"jsonrpc\":\"1.0\",\"id\":\"swap\",\"method\":\"sendtoaddress\",\"params\":[\"" +
-                               address + "\"," + amount.ToString("0.########", CultureInfo.InvariantCulture) + "]}");
+            StringBuilder body = new StringBuilder();
+            body.Append("{\"jsonrpc\":\"1.0\",\"id\":\"dragonator\",\"method\":\"sendtoaddress\",\"params\":[\"");
+            body.Append(address).Append("\",");
+            body.Append(amount.ToString("0.########", CultureInfo.InvariantCulture));
+            body.Append(",\"\",\"\",true");
+
+            if (hexData != null && hexData.Count > 0)
+            {
+                body.Append(",[");
+
+                for (int i = 0; i < hexData.Count; i++)
+                {
+                    string item = hexData[i];
+                    if (string.IsNullOrEmpty(item) || item.Length % 2 != 0)
+                        throw new SwapRefused("OP_RETURN data must be an even number of hex characters");
+
+                    if (item.Length > MaxDataBytes * 2)
+                        throw new SwapRefused("one OP_RETURN holds at most " + MaxDataBytes + " bytes");
+
+                    if (i > 0) body.Append(',');
+                    body.Append('"').Append(item).Append('"');
+                }
+
+                body.Append(']');
+            }
+
+            body.Append("]}");
+
+            string json = Call(body.ToString());
 
             string txid = Json.TextOf(Json.Field(json, "result"));
             if (string.IsNullOrEmpty(txid))
-                throw new SwapRefused("the StealthCoin wallet did not return a transaction id");
+                throw new SwapRefused("the Stealth wallet did not return a transaction id");
 
             return txid;
+        }
+
+        public static string Command(string method, string parameters)
+        {
+            Load();
+
+            return Call("{\"jsonrpc\":\"1.0\",\"id\":\"dragonator\",\"method\":\"" + method +
+                        "\",\"params\":[" + parameters + "]}");
         }
 
         private static string Call(string body)

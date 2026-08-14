@@ -31,7 +31,7 @@ namespace Dragonator.Addons
             }
             catch (Exception e)
             {
-                problem = "StealthCoin: " + e.Message;
+                problem = "Stealth: " + e.Message;
                 return false;
             }
 
@@ -41,11 +41,11 @@ namespace Dragonator.Addons
             }
             catch (Exception e)
             {
-                problem = "StealthCoin ok, but Monero: " + e.Message;
+                problem = "Stealth ok, but Monero: " + e.Message;
                 return false;
             }
 
-            problem = "ok, StealthCoin balance " + Num.Xst(balance) + " XST, Monero reachable";
+            problem = "ok, Stealth balance " + Num.Xst(balance) + " XST, Monero reachable";
             return true;
         }
     }

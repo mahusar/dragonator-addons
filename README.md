@@ -44,3 +44,15 @@ dotnet build -c Release
 take it from a Dragonator build (`Dragonator_Data/Managed/`) and pass
 `-p:DragonatorApi=/path/to/Dragonator.Api.dll`.
 
+## Licence
+
+Copyright (C) 2026 Martin Husar
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the Licence, or (at your option) any
+later version. See `LICENSE` for the full text.
+
+The author provides this software only and does not operate any Dragonator
+server, betting service or swap service.
+

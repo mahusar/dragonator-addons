@@ -26,7 +26,7 @@ namespace Dragonator.Addons
 
             if (!fullySigned)
             {
-                Log("a receipt arrived that is not signed by every player - stored but not anchored");
+                Log("a receipt arrived that is not signed by every player - ignored");
                 return;
             }
 

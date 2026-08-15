@@ -30,27 +30,16 @@ Without `Bet` a server is free to play. Add-ons load on headless servers only.
 Pick from the menu, or name what you want:
 
     bash tools/build.sh all
-    bash tools/build.sh witness bet
+    bash tools/build.sh witness registry
     bash tools/build.sh --clean all
 
 Every add-on lands in `builds/` next to this file, one `.dll` each, ready to
 copy to a server.
 
-Needs the .NET SDK. On Debian or Ubuntu: `sudo apt install dotnet-sdk-8.0`.
+Needs the .NET SDK. `sudo apt install dotnet-sdk-8.0`.
 
 It also needs `Dragonator.Api.dll`, which ships inside every Dragonator build at
-`dragonator_Data/Managed/`. The script finds it on its own beside this repo, in
-the current folder or in your home folder, and also next to a Unity checkout of
-the game. If yours is somewhere else:
-
-    bash tools/build.sh --api /path/to/dragonator_Data/Managed/Dragonator.Api.dll all
-
-`DRAGONATOR_API` in the environment does the same.
-
-The built `.dll` files are platform-neutral, so one built on Windows or macOS
-runs on a Linux server unchanged. The script itself runs on all three (Windows
-through Git Bash or WSL). From a downloaded zip the executable bit is lost, so
-use `bash tools/build.sh` rather than `./tools/build.sh`.
+`dragonator_Data/Managed/`.
 
 ## Install
 
@@ -59,7 +48,7 @@ The `Addons` folder sits beside `rpc.conf`, in the path the banner prints as
 
     cd ~/.config/unity3d/StealthDragons/StealthDragons
     mkdir -p Addons
-    cp /path/to/builds/Bet.dll Addons/
+    cp /path/to/builds/Registry.dll Addons/
 
 Or send them straight there when building:
 

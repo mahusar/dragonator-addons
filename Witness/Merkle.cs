@@ -8,15 +8,37 @@ namespace Dragonator.Addons
     {
         public const int DigestBytes = 32;
 
+        private const byte LeafPrefix = 0x00;
+        private const byte NodePrefix = 0x01;
+
+        public static byte[] LeafHash(byte[] digest)
+        {
+            if (digest == null) return null;
+
+            byte[] buffer = new byte[1 + digest.Length];
+            buffer[0] = LeafPrefix;
+            Buffer.BlockCopy(digest, 0, buffer, 1, digest.Length);
+
+            return Sha256(buffer);
+        }
+
+        public static byte[] NodeHash(byte[] left, byte[] right)
+        {
+            if (left == null || right == null) return null;
+
+            byte[] buffer = new byte[1 + left.Length + right.Length];
+            buffer[0] = NodePrefix;
+            Buffer.BlockCopy(left, 0, buffer, 1, left.Length);
+            Buffer.BlockCopy(right, 0, buffer, 1 + left.Length, right.Length);
+
+            return Sha256(buffer);
+        }
+
         public static byte[] Root(List<byte[]> leaves)
         {
-            if (leaves == null || leaves.Count == 0) return new byte[DigestBytes];
+            if (leaves == null || leaves.Count == 0) return Sha256(new byte[0]);
 
-            List<byte[]> level = new List<byte[]>(leaves);
-
-            while (level.Count > 1) level = NextLevel(level);
-
-            return level[0];
+            return RootOf(leaves, 0, leaves.Count);
         }
 
         public static List<string> Path(List<byte[]> leaves, int index)
@@ -25,28 +47,16 @@ namespace Dragonator.Addons
 
             if (leaves == null || index < 0 || index >= leaves.Count) return path;
 
-            List<byte[]> level = new List<byte[]>(leaves);
-            int at = index;
-
-            while (level.Count > 1)
-            {
-                int sibling = (at % 2 == 0) ? at + 1 : at - 1;
-                if (sibling >= level.Count) sibling = at;
-
-                path.Add((at % 2 == 0 ? "r:" : "l:") + Hex(level[sibling]));
-
-                level = NextLevel(level);
-                at /= 2;
-            }
+            Walk(leaves, 0, leaves.Count, index, path);
 
             return path;
         }
 
-        public static byte[] FollowPath(byte[] leaf, List<string> path)
+        public static byte[] FollowPath(byte[] leafDigest, List<string> path)
         {
-            if (leaf == null) return null;
+            if (leafDigest == null) return null;
 
-            byte[] running = leaf;
+            byte[] running = LeafHash(leafDigest);
 
             if (path != null)
             {
@@ -55,38 +65,56 @@ namespace Dragonator.Addons
                     if (step == null || step.Length < 3) return null;
 
                     byte[] other = FromHex(step.Substring(2));
-                    if (other == null) return null;
+                    if (other == null || other.Length != DigestBytes) return null;
 
-                    running = step.StartsWith("r:")
-                        ? Pair(running, other)
-                        : Pair(other, running);
+                    if (step.StartsWith("r:", StringComparison.Ordinal)) running = NodeHash(running, other);
+                    else if (step.StartsWith("l:", StringComparison.Ordinal)) running = NodeHash(other, running);
+                    else return null;
                 }
             }
 
             return running;
         }
 
-        private static List<byte[]> NextLevel(List<byte[]> level)
+        private static byte[] RootOf(List<byte[]> leaves, int start, int count)
         {
-            List<byte[]> next = new List<byte[]>();
+            if (count == 1) return LeafHash(leaves[start]);
 
-            for (int i = 0; i < level.Count; i += 2)
-            {
-                byte[] left = level[i];
-                byte[] right = (i + 1 < level.Count) ? level[i + 1] : level[i];
-                next.Add(Pair(left, right));
-            }
+            int split = SplitAt(count);
 
-            return next;
+            return NodeHash(RootOf(leaves, start, split),
+                            RootOf(leaves, start + split, count - split));
         }
 
-        private static byte[] Pair(byte[] left, byte[] right)
+        private static void Walk(List<byte[]> leaves, int start, int count, int index, List<string> path)
         {
-            byte[] joined = new byte[left.Length + right.Length];
-            Buffer.BlockCopy(left, 0, joined, 0, left.Length);
-            Buffer.BlockCopy(right, 0, joined, left.Length, right.Length);
+            if (count == 1) return;
 
-            using (SHA256 sha = SHA256.Create()) return sha.ComputeHash(joined);
+            int split = SplitAt(count);
+
+            if (index < split)
+            {
+                Walk(leaves, start, split, index, path);
+                path.Add("r:" + Hex(RootOf(leaves, start + split, count - split)));
+            }
+            else
+            {
+                Walk(leaves, start + split, count - split, index - split, path);
+                path.Add("l:" + Hex(RootOf(leaves, start, split)));
+            }
+        }
+
+        private static int SplitAt(int count)
+        {
+            int split = 1;
+            while (split * 2 < count) split *= 2;
+
+            return split;
+        }
+
+        private static byte[] Sha256(byte[] data)
+        {
+            using (SHA256 sha = SHA256.Create()) return sha.ComputeHash(data);
         }
 
         public static string Hex(byte[] bytes)

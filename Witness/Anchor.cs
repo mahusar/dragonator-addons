@@ -59,20 +59,12 @@ namespace Dragonator.Addons
 
             if (string.IsNullOrEmpty(json)) return found;
 
-            int at = 0;
-
-            while (true)
+            foreach (string push in ScriptScan.NullDataPushes(json))
             {
-                int start = json.IndexOf(Magic, at, StringComparison.OrdinalIgnoreCase);
-                if (start < 0) break;
+                if (push.Length != HexLength) continue;
 
-                if (start + HexLength <= json.Length)
-                {
-                    Anchor anchor = Decode(json.Substring(start, HexLength));
-                    if (anchor != null) found.Add(anchor);
-                }
-
-                at = start + Magic.Length;
+                Anchor anchor = Decode(push);
+                if (anchor != null) found.Add(anchor);
             }
 
             return found;

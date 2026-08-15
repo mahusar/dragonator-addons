@@ -70,21 +70,13 @@ namespace Dragonator.Addons
             List<Listing> found = new List<Listing>();
             if (string.IsNullOrEmpty(json)) return found;
 
-            int at = 0;
-
-            while (true)
+            foreach (string push in ScriptScan.NullDataPushes(json))
             {
-                at = json.IndexOf(Magic, at, StringComparison.Ordinal);
-                if (at < 0) break;
+                if (push.Length != HexLength) continue;
 
-                if (at + HexLength <= json.Length)
-                {
-                    Listing listing = Decode(json.Substring(at, HexLength));
+                Listing listing = Decode(push);
 
-                    if (listing != null && !Holds(found, listing)) found.Add(listing);
-                }
-
-                at += Magic.Length;
+                if (listing != null && !Holds(found, listing)) found.Add(listing);
             }
 
             return found;

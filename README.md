@@ -7,8 +7,9 @@ behaves exactly as before.
 
 | Add-on | What it does | Needs |
 |---|---|---|
-| `Bet` | Bets, payouts and refunds | Stealth daemon |
 | `Registry` | Lets players find other servers | Stealth daemon |
+| `Witness` | Publishes proof that a match really happened | Stealth daemon |
+| `Bet` | Bets, payouts and refunds | Stealth daemon |
 | `Swapper` | Players top up XST with Monero | Stealth daemon and monero-wallet-rpc |
 
 Without `Bet` a server is free to play. Add-ons load on headless servers only.
@@ -16,6 +17,11 @@ Without `Bet` a server is free to play. Add-ons load on headless servers only.
 `Registry` reads the public server list off the Stealth chain, so a player who
 reaches one Dragonator finds the rest. Getting your own server onto that list is
 a one-off command - see `Registry/tools/registry.py` and `Registry/SETUP.md`.
+
+`Witness` keeps a receipt of every match, signed by both players with keys the
+server does not have, and anchors them on the Stealth chain - so a result cannot
+be invented, altered or back-dated. Anchoring is off until the operator turns it
+on.
 
 ## Install
 

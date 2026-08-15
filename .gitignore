@@ -1,5 +1,6 @@
 bin/
 obj/
+builds/
 *.user
 *.suo
 .vs/

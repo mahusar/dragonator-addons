@@ -11,6 +11,8 @@
     <DebugType>none</DebugType>
     <Product>Bet</Product>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <OutputPath>$(MSBuildThisFileDirectory)../builds/</OutputPath>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
   </PropertyGroup>
 
   <ItemGroup>

@@ -11,6 +11,8 @@
     <DebugType>none</DebugType>
     <Product>Registry</Product>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <OutputPath>$(MSBuildThisFileDirectory)../builds/</OutputPath>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
   </PropertyGroup>
 
   <ItemGroup>

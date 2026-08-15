@@ -76,7 +76,7 @@ namespace Dragonator.Addons
 
                 if (jump > MaxJumpPercent)
                     throw new PriceRefused("the rate moved " + Num.Percent(jump) + "% since the last good check (" +
-                                           Num.Xst(previous) + " to " + Num.Xst(market) + ") — refusing this reading");
+                                           Num.Xst(previous) + " to " + Num.Xst(market) + ") - refusing this reading");
             }
 
             lock (guard) lastGood = market;

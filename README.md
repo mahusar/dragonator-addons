@@ -15,7 +15,7 @@ Without `Bet` a server is free to play. Add-ons load on headless servers only.
 
 `Registry` reads the public server list off the Stealth chain, so a player who
 reaches one Dragonator finds the rest. Getting your own server onto that list is
-a one-off command — see `Registry/tools/registry.py` and `Registry/SETUP.md`.
+a one-off command - see `Registry/tools/registry.py` and `Registry/SETUP.md`.
 
 ## Install
 

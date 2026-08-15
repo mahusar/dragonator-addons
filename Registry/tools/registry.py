@@ -113,7 +113,7 @@ def cmd_list(addr, pages=10, per=100):
 
 
 def usage():
-    print("""registry.py — read and write Dragonator server listings
+    print("""registry.py - read and write Dragonator server listings
 
   list    <registry-address>        every listing found on that address
   encode  <onion> [port]            record hex

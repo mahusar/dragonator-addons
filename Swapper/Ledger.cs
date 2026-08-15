@@ -63,7 +63,7 @@ namespace Dragonator.Addons
                     notes.TryGetValue(pair.Key, out note);
 
                     string why = pair.Value == Claimed
-                        ? "a send was started and never confirmed — check the wallet by hand before anything else"
+                        ? "a send was started and never confirmed - check the wallet by hand before anything else"
                         : note;
 
                     stuck.Add(Short(pair.Key) + " " + pair.Value +

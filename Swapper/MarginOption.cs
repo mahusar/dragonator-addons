@@ -55,7 +55,7 @@ namespace Dragonator.Addons
 
             if (parsed < 0m)
             {
-                error = "A margin cannot be negative — that would pay above market.";
+                error = "A margin cannot be negative - that would pay above market.";
                 return false;
             }
 

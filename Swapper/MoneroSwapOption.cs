@@ -27,7 +27,7 @@ namespace Dragonator.Addons
 
             return string.IsNullOrEmpty(trouble)
                 ? SwapRate.Describe()
-                : SwapRate.Describe() + "  —  " + trouble;
+                : SwapRate.Describe() + "  -  " + trouble;
         }
 
         public void ApplyDefault()

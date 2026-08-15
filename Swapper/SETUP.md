@@ -26,7 +26,7 @@ both claim the same settings, and which wins depends on file sort order.
 ## 2. Open the swap port
 
 The swapper answers on its own port, not the game's. Add to `torrc`, **in the same
-block as your existing `HiddenServicePort` lines** — they attach to the
+block as your existing `HiddenServicePort` lines** - they attach to the
 `HiddenServiceDir` above them:
 
 ```
@@ -41,7 +41,7 @@ port, so you never publish it. Use `-swapport <n>` if 5556 is taken and match th
 `torrc` line.
 
 If the port cannot be opened, Dragonator advertises `swap=off` rather than a rate
-it cannot serve — a missing `torrc` line shows as "no swapping" in the banner, not
+it cannot serve - a missing `torrc` line shows as "no swapping" in the banner, not
 as a broken button.
 
 ## 3. Monero binaries
@@ -55,7 +55,7 @@ They are **not** on your PATH. Call them with `./` from inside the folder.
 
 ## 4. Create the wallet
 
-Offline — it needs no daemon, and this avoids `--proxy` argument errors entirely:
+Offline - it needs no daemon, and this avoids `--proxy` argument errors entirely:
 
 ```
 cd monero-x86_64-linux-gnu-v0.18.5.1
@@ -74,7 +74,7 @@ cd monero-x86_64-linux-gnu-v0.18.5.1
 You do not run a Monero node. You sync against someone else's over Tor.
 
 Get four or five .onion addresses from https://monero.fail with the Tor filter.
-**Ignore its red/green flags** — it probes over clearnet and reports false
+**Ignore its red/green flags** - it probes over clearnet and reports false
 failures for onion nodes. Test them yourself:
 
 ```
@@ -104,7 +104,7 @@ chmod 600 ~/.monero-pass
 wc -c ~/.monero-pass
 ```
 
-`wc -c` must equal your password's exact length. Use `printf`, never `echo` —
+`wc -c` must equal your password's exact length. Use `printf`, never `echo` -
 `echo` appends a newline that becomes part of the password.
 
 ## 7. Start the wallet RPC
@@ -118,7 +118,7 @@ cd monero-x86_64-linux-gnu-v0.18.5.1
   --log-file ~/monero-wallet-rpc.log
 ```
 
-`--daemon-address` must be a **bare** `host.onion:port` — no `http://`, no
+`--daemon-address` must be a **bare** `host.onion:port` - no `http://`, no
 trailing slash. Anything else gives a misleading error demanding
 `--daemon-ssl-allow-any-cert`. Run it under `tmux` or systemd so it survives your
 SSH session.
@@ -133,7 +133,7 @@ ps aux | grep monero-wallet-rpc | grep -v grep
 ss -tnp | grep 9050
 ```
 
-A single `no_connection_to_daemon` is survivable — it retries. Do not restart on
+A single `no_connection_to_daemon` is survivable - it retries. Do not restart on
 the first one. You are ready at:
 
 ```
@@ -153,7 +153,7 @@ R '{"jsonrpc":"2.0","id":"0","method":"create_address","params":{"account_index"
 ```
 
 `get_height` should match your node. `create_address` returns an address starting
-with `8` — subaddresses start with 8, your main address with 4.
+with `8` - subaddresses start with 8, your main address with 4.
 
 Send a little XMR to it and watch it arrive:
 
@@ -168,7 +168,7 @@ with its `subaddr_index`, the Monero side is proven.
 
 Dragonator asks at startup, and the answer reaches players on the connect screen.
 
-**Manual** — you type it, it stays until you change it:
+**Manual** - you type it, it stays until you change it:
 
 ```
 XST paid per 1 XMR ('off' for no swapping) [no swapping]: 12000
@@ -179,7 +179,7 @@ a stale price. **Sanity-check against market before entering it.** Market is
 around 12,100 XST per XMR at the time of writing. A rate of 250,000 would pay
 roughly twenty times what the XMR is worth and drain your wallet in a few swaps.
 
-**Automatic** — computed from live prices, refreshed every 120 seconds:
+**Automatic** - computed from live prices, refreshed every 120 seconds:
 
 ```
 XST per XMR = (XMR_usd / XST_usd) x (1 - swapmargin)
@@ -188,19 +188,19 @@ XST per XMR = (XMR_usd / XST_usd) x (1 - swapmargin)
 - **XMR**: CoinGecko and Kraken, cross-checked. More than 3% apart and the rate is
   refused; when they agree the **lower** is used, so an error always errs toward
   paying out less.
-- **XST**: NoFinex `https://xapi.finexbit.com/v1/market` — read the `XST_USDT`
+- **XST**: NoFinex `https://xapi.finexbit.com/v1/market` - read the `XST_USDT`
   entry's `"price"`, which must also be `"active": true`. Use `/market`, not
   `/ticker`; the ticker endpoint returns a PHP error. NoFinex bans IPs polling
   faster than twice a second.
 
 **Never use CoinGecko for the XST price.** `ids=stealthcoin` still returns a
-number, but it is a frozen delisted entry — measured 2026-08-04, last updated
+number, but it is a frozen delisted entry - measured 2026-08-04, last updated
 2024-05-09, about 2.2 years stale. It looks live and is not. Freshness-check any
 second XST source before trusting it.
 
 Price requests go through Tor on `127.0.0.1:9050`, so price sites never learn your
 clearnet IP. `-swapdirect` bypasses Tor if an exit node is blocked. **TLS is
-validated strictly either way, and over Tor that is not optional** — the exit node
+validated strictly either way, and over Tor that is not optional** - the exit node
 sees your traffic and could otherwise forge a price and drain your wallet.
 
 `swapmargin` is your spread. Without one you sell at exactly market and lose to
@@ -219,7 +219,7 @@ You can switch back to manual whenever you like.
 
 Automatic mode also enforces these itself, none configurable: it **refuses rather
 than guesses** (any failed check sets the rate to `off` and issues no new address
-— it never falls back to the last known rate), rejects **stale** prices (CoinGecko
+- it never falls back to the last known rate), rejects **stale** prices (CoinGecko
 XMR must be under 30 minutes old, any rate expires 10 minutes after it is
 computed), rejects XMR sources **more than 3% apart**, rejects **jumps** over 25%
 from the last accepted rate, and rejects a **dead market** (XST inactive, or no
@@ -231,17 +231,17 @@ around 28,600 USDT), so its price is cheap to move, and the one apparent second
 source is stale by years. Since the rate is `XMR_usd / XST_usd`, pushing XST
 *down* pushes your payout *up*: an attacker depresses XST, swaps at the inflated
 rate, and you cover the difference. Your protection is the 25% bound, `swapmax`
-and `swapreserve` — not a cross-check. **Set `swapmax` if you run automatic.**
+and `swapreserve` - not a cross-check. **Set `swapmax` if you run automatic.**
 
 ## 11. Files, and stuck swaps
 
 Two append-only files beside `rpc.conf`:
 
-- **`swaps.txt`** — one line per deposit address issued: when, subaddress index,
+- **`swaps.txt`** - one line per deposit address issued: when, subaddress index,
   XMR address, the player's XST address, **the rate locked at that moment**, and
   confirmations required. The locked rate is what gets paid, however far the market
   has moved since.
-- **`credits.txt`** — one line per event on an incoming payment, keyed on
+- **`credits.txt`** - one line per event on an incoming payment, keyed on
   `txid:subaddress`. A payment is only ever acted on once, because the key is
   checked before anything is sent.
 
@@ -249,20 +249,20 @@ Two append-only files beside `rpc.conf`:
 |---|---|
 | `paid` | Done. The last field is the Stealth transaction id. |
 | `held` | Refused, will not retry: below `swapmin`, over `swapmax`, or no `swaps.txt` entry for that subaddress. **Needs you.** |
-| `claimed` | A send started and never confirmed — the process died in between. **Check the wallet by hand before doing anything else.** |
+| `claimed` | A send started and never confirmed - the process died in between. **Check the wallet by hand before doing anything else.** |
 
 `claimed` is never retried automatically. The swapper cannot tell whether the send
 went out, and retrying might pay twice. Look up the player's XST address in your
 wallet, see whether it was paid, and settle it yourself.
 
-A payment that merely cannot be covered right now — because `swapreserve` would be
-breached — gets **no** `credits.txt` entry and is retried every minute, so topping
+A payment that merely cannot be covered right now - because `swapreserve` would be
+breached - gets **no** `credits.txt` entry and is retried every minute, so topping
 up the wallet clears it.
 
 The banner reports anything outstanding:
 
 ```
-   swapper   12000 XST per XMR (fixed)  —  2 swaps need attention in credits.txt
+   swapper   12000 XST per XMR (fixed)  -  2 swaps need attention in credits.txt
 ```
 
 ## Operating notes
@@ -276,4 +276,4 @@ The banner reports anything outstanding:
   spends XMR, so it does not need your spend key. Generate offline, restore on the
   server with `--generate-from-view-key`, and sweep manually from cold storage.
   `create_address` and `get_transfers` behave identically, so nothing above
-  changes — and if the server is compromised the XMR stays untouchable.
+  changes - and if the server is compromised the XMR stays untouchable.

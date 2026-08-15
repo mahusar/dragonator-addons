@@ -70,7 +70,7 @@ namespace Dragonator.Addons
 
             if (Bet <= 0m)
             {
-                host.Log("Bet is 0 — this is a free table. No stake is collected and no payout is ever sent.");
+                host.Log("Bet is 0 - this is a free table. No stake is collected and no payout is ever sent.");
                 return;
             }
 

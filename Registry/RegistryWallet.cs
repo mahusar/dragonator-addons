@@ -34,7 +34,7 @@ namespace Dragonator.Addons
 
                 problem = behind < 0
                     ? "ok, but the daemon is at block " + height.ToString(CultureInfo.InvariantCulture) +
-                      ", before the first known listing — nothing will be found until it syncs"
+                      ", before the first known listing - nothing will be found until it syncs"
                     : "ok, chain at block " + height.ToString(CultureInfo.InvariantCulture);
 
                 ChainDirectory.Begin();

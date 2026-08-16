@@ -8,6 +8,6 @@ namespace Dragonator.Addons
 
         public static int BatchSeconds = 600;
 
-        public static decimal AnchorAmount = 0.0001m;
+        public static decimal AnchorAmount = 0.01m;
     }
 }

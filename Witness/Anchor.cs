@@ -10,9 +10,27 @@ namespace Dragonator.Addons
         public const int RecordBytes = 40;
         public const int HexLength = RecordBytes * 2;
 
+        public const int FlagContested = 0x01;
+        public const int FlagBot = 0x02;
+
         public byte[] Root;
         public int Count;
         public int Flags;
+
+        public bool Contested { get { return (Flags & FlagContested) != 0; } }
+
+        public bool AnyBot { get { return (Flags & FlagBot) != 0; } }
+
+        public string Describe()
+        {
+            string text = Contested && !AnyBot
+                ? "every match human against human"
+                : "not all matches are contested";
+
+            if (AnyBot) text += ", at least one has a bot";
+
+            return text;
+        }
 
         public static string Encode(byte[] root, int count, int flags)
         {

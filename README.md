@@ -21,6 +21,28 @@ server does not have, and anchors them on the Stealth chain - so a result cannot
 be invented, altered or back-dated. Anchoring is off until the operator turns it
 on.
 
+Three jobs, three places:
+
+| What | Where it lives | What it proves |
+|---|---|---|
+| The match itself | `receipts/<digest>.txt` on the server | what happened |
+| Honesty | the player signatures inside the receipt | both clients checked the deal and agreed |
+| Time | a 40 byte anchor on the chain | it existed by then, and has not changed since |
+
+Only a hash goes on the chain, never the match, so nobody can list what a player
+has played. Up to 16 receipts share one anchor through a Merkle root and each
+keeps its own proof path, so any single receipt still checks out on its own. The
+anchor also carries one byte saying whether every match in the batch was human
+against human, and whether any of them had a bot.
+
+Full receipts are served as `GET_RECEIPT|<digest>` on port 5555. Read anchors
+back with `Witness/tools/anchor.py`:
+
+    python3 anchor.py dir ~/.config/unity3d/StealthDragons/StealthDragons/receipts/
+    python3 anchor.py verify <receipt.txt>
+
+Same approach as RFC 6962 Certificate Transparency and OpenTimestamps.
+
 Without `Bet` a server is free to play. Add-ons load on headless servers only.
 
 ## Build

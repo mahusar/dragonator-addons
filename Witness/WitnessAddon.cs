@@ -18,6 +18,19 @@ namespace Dragonator.Addons
         {
             host = witnessHost;
             Log("recording match receipts to " + ReceiptStore.Root);
+
+            if (!WitnessState.Anchoring) return;
+
+            foreach (string digest in ReceiptStore.Unanchored())
+            {
+                if (pendingDigests.Contains(digest)) continue;
+
+                pendingDigests.Add(digest);
+                pendingLeaves.Add(Merkle.FromHex(digest));
+            }
+
+            if (pendingDigests.Count > 0)
+                Log("re-queued " + pendingDigests.Count + " receipt(s) left unanchored by an earlier run");
         }
 
         public void Record(string receipt, string signatures, bool fullySigned)
@@ -85,7 +98,7 @@ namespace Dragonator.Addons
             try
             {
                 byte[] root = Merkle.Root(leaves);
-                string record = Anchor.Encode(root, leaves.Count, 0);
+                string record = Anchor.Encode(root, leaves.Count, FlagsFor(digests));
 
                 string address = Stealth.NewAddress();
                 string txid = Stealth.Send(address, WitnessState.AnchorAmount, new List<string> { record });
@@ -93,7 +106,10 @@ namespace Dragonator.Addons
                 for (int i = 0; i < digests.Count; i++)
                     ReceiptStore.Anchored(digests[i], txid, Merkle.Path(leaves, i));
 
-                Log("anchored " + digests.Count + " receipt(s), merkle root " + Short(Merkle.Hex(root)) + ", txid " + txid);
+                Anchor written = Anchor.Decode(record);
+
+                Log("anchored " + digests.Count + " receipt(s), merkle root " + Short(Merkle.Hex(root)) +
+                    ", txid " + txid + (written != null ? " - " + written.Describe() : ""));
             }
             catch (Exception e)
             {
@@ -102,6 +118,27 @@ namespace Dragonator.Addons
 
                 Failed("could not anchor " + digests.Count + " receipt(s) (" + e.GetType().Name + ": " + e.Message + ") - they stay queued");
             }
+        }
+
+        private static int FlagsFor(List<string> digests)
+        {
+            bool contested = digests.Count > 0;
+            bool bot = false;
+
+            foreach (string digest in digests)
+            {
+                bool one, hasBot;
+                Composition.Read(ReceiptStore.Read(digest), out one, out hasBot);
+
+                if (!one) contested = false;
+                if (hasBot) bot = true;
+            }
+
+            int flags = 0;
+            if (contested) flags |= Anchor.FlagContested;
+            if (bot) flags |= Anchor.FlagBot;
+
+            return flags;
         }
 
         public static string DigestOf(string receipt)

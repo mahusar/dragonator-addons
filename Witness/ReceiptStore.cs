@@ -57,6 +57,50 @@ namespace Dragonator.Addons
             return Clean(digest) && File.Exists(FileFor(digest));
         }
 
+        public static List<string> Unanchored()
+        {
+            List<string> waiting = new List<string>();
+
+            if (!Directory.Exists(Root)) return waiting;
+
+            string[] files;
+            try
+            {
+                files = Directory.GetFiles(Root, "*.txt");
+            }
+            catch (Exception)
+            {
+                return waiting;
+            }
+
+            Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+
+            foreach (string file in files)
+            {
+                string digest = Path.GetFileNameWithoutExtension(file);
+                if (!Clean(digest)) continue;
+
+                bool anchored = false;
+                try
+                {
+                    foreach (string line in File.ReadAllLines(file))
+                    {
+                        if (!line.StartsWith("txid=")) continue;
+                        if (line.Length > 5) anchored = true;
+                        break;
+                    }
+                }
+                catch (Exception)
+                {
+                    continue;
+                }
+
+                if (!anchored) waiting.Add(digest.ToLowerInvariant());
+            }
+
+            return waiting;
+        }
+
         private static string FileFor(string digest)
         {
             return Path.Combine(Root, digest.ToLowerInvariant() + ".txt");

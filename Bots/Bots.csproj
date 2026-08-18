@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>Bots</AssemblyName>
+    <RootNamespace>Dragonator.Addons</RootNamespace>
+    <Version>0.1.0</Version>
+    <LangVersion>9.0</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <DebugType>none</DebugType>
+    <Product>Bots</Product>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <OutputPath>$(MSBuildThisFileDirectory)../builds/</OutputPath>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="*.cs" />
+    <Compile Include="..\Shared\Num.cs" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(DragonatorApi)' == ''">
+    <DragonatorApi>..\..\StealthDragons\Library\ScriptAssemblies\Dragonator.Api.dll</DragonatorApi>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="DragonatorApi" Value="6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Dragonator.Api">
+      <HintPath>$(DragonatorApi)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="CheckDragonatorApi" BeforeTargets="BeforeBuild">
+    <Error Condition="!Exists('$(DragonatorApi)')"
+           Text="Dragonator.Api.dll not found at '$(DragonatorApi)'. Take it from a Dragonator build (Dragonator_Data/Managed/) or a Unity checkout (Library/ScriptAssemblies/), then pass -p:DragonatorApi=&lt;path&gt;." />
+  </Target>
+
+</Project>

@@ -9,6 +9,7 @@ behaves exactly as before.
 |---|---|---|
 | `Registry` | Lets players find other servers | Stealth daemon |
 | `Witness` | Publishes proof that a match really happened | Stealth daemon |
+| `Bots` | Turns a server into an arena bots dial in to | nothing |
 | `Bet` | Bets, payouts and refunds | Stealth daemon |
 | `Swapper` | Players top up XST with Monero | Stealth daemon and monero-wallet-rpc |
 
@@ -42,6 +43,25 @@ back with `Witness/tools/anchor.py`:
     python3 anchor.py verify <receipt.txt>
 
 Same approach as RFC 6962 Certificate Transparency and OpenTimestamps.
+
+`Bots` lets anyone write a bot, in any language, and enter it in a competition. A
+server given a dial-in port becomes a **bot-only arena**: it refuses human
+players and runs matches back to back on its own. Humans who want to play a bot
+use practice mode in the client instead, which needs no server.
+
+**Bots dial in**, so entering costs an entrant one file on their laptop - no
+hosting, no public address, no hidden service. Each one signs in with its own
+Ed25519 key and proves it holds that key before it is seated. That key is the
+entrant's identity: their place in the queue, their name on the board, and their
+signature on the match receipt, which is what makes "my bot beat yours" checkable
+rather than the operator's word.
+
+A bot never runs inside the server, so it cannot reach the wallet, and it only
+ever sees what the server chose to send - its own hand, but only a card *count*
+for the opponent. The server sends the board as one line of JSON and the bot
+answers with one move; every move is checked and illegal ones are refused. See
+`Bots/PROTOCOL.md` to write one, and `Bots/tools/dragon_bot.py` for a complete
+working entrant to copy.
 
 Without `Bet` a server is free to play. Add-ons load on headless servers only.
 

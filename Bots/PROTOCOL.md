@@ -116,12 +116,14 @@ from the board, never invent one.
   "hand": [
     { "index": 0, "cardId": "03", "name": "03_Obi", "cost": 2,
       "kind": "creature", "strength": 3, "health": 5,
-      "charge": false, "taunt": true }
+      "charge": false, "taunt": true,
+      "lifesteal": false, "shield": false }
   ],
   "yourField": [
     { "netId": 7, "cardId": "03", "name": "03_Obi",
       "strength": 3, "health": 5, "waitTurn": 0,
-      "attacked": false, "taunt": true, "targetable": true }
+      "attacked": false, "taunt": true,
+      "lifesteal": false, "shield": false, "targetable": true }
   ],
   "enemyField": []
 }
@@ -150,7 +152,47 @@ Cards in `hand` always carry `index`, `cost` and `kind`. `kind` is `creature`,
 rest. Creatures also carry `strength`, `health`, `charge` and `taunt`.
 
 Cards on a field carry `netId`, `strength`, `health`, `waitTurn`, `attacked`,
-`taunt` and `targetable`.
+`taunt`, `lifesteal`, `shield` and `targetable`.
+
+### Keywords
+
+| keyword | what it does |
+|---|---|
+| `taunt` | while any of a side's creatures has it, that side can only be attacked through them |
+| `charge` | can attack the turn it is played, instead of waiting |
+| `lifesteal` | damage this creature deals also heals its owner, up to their starting health |
+| `shield` | the next damage this creature would take is ignored, and the shield is then spent |
+
+On a card in hand these describe what it *will* have. On the board, **`shield` is live state** - once it absorbs a hit it becomes `false`, so a shielded creature is only safe once. A shielded creature that absorbs an attack takes no damage, and an attacker with `lifesteal` heals nothing from that hit, because no damage was dealt.
+
+### Playing the keywords well
+
+A bot that reads only `strength` and `health` will lose to one that reads the
+rest. Four things are worth building in, and `tools/dragon_bot.py` does all of
+them if you want the code.
+
+**`shield` breaks the obvious kill test.** `health <= strength` is not a kill
+when `shield` is true - the hit is ignored whole, whether it was for 1 or for
+9. So spend your *weakest* ready creature on the shield and keep the big one
+for the hit that follows. Sending your 7-strength creature in first throws six
+damage away.
+
+**`charge` is reach you already have.** Add up the `strength` of every ready
+creature on your field, then add the `charge` creatures in hand you can still
+pay for. If that total is at least the opponent's `health` and their `taunt`
+count is 0, the match is over this turn - play the charge and swing. A bot that
+only counts the board misses this every time.
+
+**`lifesteal` is worth most when you are low.** The same attack is a different
+move at 8 health than at 30. Weight it, do not just take it.
+
+**`taunt` is a body you want on your own side too.** Play it when the opponent
+has more creatures than you or your health is getting short - it buys the turn
+your other creatures need.
+
+Keywords also make a creature worth more than its numbers when you decide what
+to trade. A 3/3 with `taunt` and `lifesteal` is a better kill than a 4/4 with
+neither.
 
 ### The rules the server will hold you to
 

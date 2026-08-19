@@ -124,6 +124,10 @@ def decide(board):
     if not board.get("yourTurn"):
         return "end"
 
+    swing = finisher(board)
+    if swing:
+        return swing
+
     play = choose_creature(board)
     if play:
         return play
@@ -135,66 +139,181 @@ def decide(board):
     return "end"
 
 
-def choose_creature(board):
-    mana = board.get("you", {}).get("mana", 0)
-
-    best = None
-
-    for card in board.get("hand", []):
-        if card.get("kind") != "creature":
-            continue
-        if card.get("cost", 0) > mana:
-            continue
-        if best is None or card.get("cost", 0) > best.get("cost", 0):
-            best = card
-
-    return None if best is None else "play %d" % best["index"]
-
-
-def choose_attack(board):
-    attacker = None
+def ready(board):
+    live = []
 
     for card in board.get("yourField", []):
         if card.get("waitTurn", 0) > 0 or card.get("attacked"):
             continue
         if card.get("strength", 0) <= 0 or card.get("health", 0) <= 0:
             continue
+        live.append(card)
 
-        attacker = card
-        break
+    return live
 
-    if attacker is None:
+
+def walled(board):
+    return board.get("opponent", {}).get("taunt", 0) > 0
+
+
+def guards(board):
+    return [card for card in board.get("enemyField", [])
+            if card.get("taunt") and card.get("targetable") and card.get("health", 0) > 0]
+
+
+def chargers(board):
+    mana = board.get("you", {}).get("mana", 0)
+
+    rush = [card for card in board.get("hand", [])
+            if card.get("kind") == "creature" and card.get("charge")]
+
+    rush.sort(key=lambda card: card.get("cost", 0))
+
+    afford = []
+
+    for card in rush:
+        cost = card.get("cost", 0)
+        if cost > mana:
+            continue
+        mana -= cost
+        afford.append(card)
+
+    return afford
+
+
+def finisher(board):
+    if walled(board):
         return None
 
-    target = choose_target(board, attacker)
+    opponent = board.get("opponent") or {}
+    if not opponent.get("targetable"):
+        return None
 
-    return None if not target else "attack %d %d" % (attacker["netId"], target)
+    face = opponent.get("health", 0)
+    mine = ready(board)
+    reach = sum(card.get("strength", 0) for card in mine)
+
+    if mine and reach >= face:
+        return "attack %d %d" % (mine[0]["netId"], opponent["netId"])
+
+    rush = chargers(board)
+
+    if rush and reach + sum(card.get("strength", 0) for card in rush) >= face:
+        return "play %d" % rush[0]["index"]
+
+    return None
 
 
-def choose_target(board, attacker):
-    opponent = board.get("opponent", {})
+def choose_creature(board):
+    mana = board.get("you", {}).get("mana", 0)
+    hurt = board.get("you", {}).get("health", 30) <= 12
+    behind = len(board.get("enemyField", [])) > len(board.get("yourField", []))
 
-    if opponent.get("taunt", 0) > 0:
-        weakest = None
+    best = None
+    best_score = None
 
-        for card in board.get("enemyField", []):
-            if not card.get("taunt") or not card.get("targetable"):
-                continue
-            if card.get("health", 0) <= 0:
-                continue
-            if weakest is None or card["health"] < weakest["health"]:
-                weakest = card
-
-        return 0 if weakest is None else weakest["netId"]
-
-    for card in board.get("enemyField", []):
-        if not card.get("targetable"):
+    for card in board.get("hand", []):
+        if card.get("kind") != "creature":
             continue
-        if 0 < card.get("health", 0) <= attacker.get("strength", 0):
-            if card.get("strength", 0) < attacker.get("health", 0):
-                return card["netId"]
 
-    return opponent.get("netId", 0) if opponent.get("targetable") else 0
+        cost = card.get("cost", 0)
+        if cost > mana:
+            continue
+
+        score = cost * 2 + card.get("strength", 0) + card.get("health", 0)
+
+        if card.get("shield"):
+            score += 4
+        if card.get("taunt") and (hurt or behind):
+            score += 6
+        if card.get("lifesteal") and hurt:
+            score += 4
+        if card.get("charge"):
+            score += 2
+
+        if best_score is None or score > best_score:
+            best_score = score
+            best = card
+
+    return None if best is None else "play %d" % best["index"]
+
+
+def legal_targets(board):
+    if walled(board):
+        return guards(board)
+
+    live = [card for card in board.get("enemyField", [])
+            if card.get("targetable") and card.get("health", 0) > 0]
+
+    opponent = board.get("opponent") or {}
+
+    if opponent.get("targetable"):
+        live.append(opponent)
+
+    return live
+
+
+def choose_attack(board):
+    mine = ready(board)
+    targets = legal_targets(board)
+
+    if not mine or not targets:
+        return None
+
+    best = None
+    best_score = 0
+
+    for attacker in mine:
+        for target in targets:
+            score = worth(board, attacker, target)
+
+            if score > best_score:
+                best_score = score
+                best = (attacker, target)
+
+    if best is None:
+        return None
+
+    return "attack %d %d" % (best[0]["netId"], best[1]["netId"])
+
+
+def worth(board, attacker, target):
+    hit = attacker.get("strength", 0)
+    mine = board.get("you", {}).get("health", 30)
+    opponent = board.get("opponent") or {}
+
+    starving = attacker.get("lifesteal") and mine <= 15
+
+    if target.get("netId") == opponent.get("netId"):
+        return hit * 3 + (hit if starving else 0)
+
+    if target.get("shield"):
+        return max(1, 20 - hit * 2)
+
+    kills = 0 < target.get("health", 0) <= hit
+    dies = target.get("strength", 0) >= attacker.get("health", 0) and not attacker.get("shield")
+
+    if kills and not dies:
+        return 60 + body(target)
+    if kills and dies:
+        return max(1, 25 + body(target) - body(attacker))
+    if dies:
+        return 0
+
+    return max(1, hit - 2 + (hit if starving else 0))
+
+
+def body(card):
+    score = card.get("strength", 0) + card.get("health", 0)
+
+    if card.get("taunt"):
+        score += 3
+    if card.get("lifesteal"):
+        score += 3
+    if card.get("shield"):
+        score += 3
+
+    return score
 
 
 def handshake(stream, key, mine, name):

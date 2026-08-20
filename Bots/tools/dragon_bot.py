@@ -230,6 +230,8 @@ def choose_creature(board):
             score += 4
         if card.get("charge"):
             score += 2
+        if card.get("deathrattle"):
+            score += card.get("deathrattleDamage", 0) + 2
 
         if best_score is None or score > best_score:
             best_score = score
@@ -293,10 +295,12 @@ def worth(board, attacker, target):
     kills = 0 < target.get("health", 0) <= hit
     dies = target.get("strength", 0) >= attacker.get("health", 0) and not attacker.get("shield")
 
+    rattle = target.get("deathrattleDamage", 0) * 2 if target.get("deathrattle") else 0
+
     if kills and not dies:
-        return 60 + body(target)
+        return max(1, 60 + body(target) - rattle)
     if kills and dies:
-        return max(1, 25 + body(target) - body(attacker))
+        return max(1, 25 + body(target) - body(attacker) - rattle)
     if dies:
         return 0
 

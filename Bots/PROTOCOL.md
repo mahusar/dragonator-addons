@@ -117,13 +117,15 @@ from the board, never invent one.
     { "index": 0, "cardId": "03", "name": "03_Obi", "cost": 2,
       "kind": "creature", "strength": 3, "health": 5,
       "charge": false, "taunt": true,
-      "lifesteal": false, "shield": false }
+      "lifesteal": false, "shield": false,
+      "deathrattle": false, "deathrattleDamage": 0 }
   ],
   "yourField": [
     { "netId": 7, "cardId": "03", "name": "03_Obi",
       "strength": 3, "health": 5, "waitTurn": 0,
       "attacked": false, "taunt": true,
-      "lifesteal": false, "shield": false, "targetable": true }
+      "lifesteal": false, "shield": false,
+      "deathrattle": false, "deathrattleDamage": 0, "targetable": true }
   ],
   "enemyField": []
 }
@@ -152,7 +154,8 @@ Cards in `hand` always carry `index`, `cost` and `kind`. `kind` is `creature`,
 rest. Creatures also carry `strength`, `health`, `charge` and `taunt`.
 
 Cards on a field carry `netId`, `strength`, `health`, `waitTurn`, `attacked`,
-`taunt`, `lifesteal`, `shield` and `targetable`.
+`taunt`, `lifesteal`, `shield`, `deathrattle`, `deathrattleDamage` and
+`targetable`.
 
 ### Keywords
 
@@ -162,13 +165,20 @@ Cards on a field carry `netId`, `strength`, `health`, `waitTurn`, `attacked`,
 | `charge` | can attack the turn it is played, instead of waiting |
 | `lifesteal` | damage this creature deals also heals its owner, up to their starting health |
 | `shield` | the next damage this creature would take is ignored, and the shield is then spent |
+| `deathrattle` | when this creature dies it deals `deathrattleDamage` to one enemy creature, picked at random |
+
+`deathrattleDamage` is how much that death deals, and it is `0` on a creature
+that has no deathrattle. The target is chosen by the server from the dying
+creature's enemies, drawn from the match seed both seats committed to before the
+first card was dealt, so it is not the operator's choice and it reproduces
+exactly in the match replay.
 
 On a card in hand these describe what it *will* have. On the board, **`shield` is live state** - once it absorbs a hit it becomes `false`, so a shielded creature is only safe once. A shielded creature that absorbs an attack takes no damage, and an attacker with `lifesteal` heals nothing from that hit, because no damage was dealt.
 
 ### Playing the keywords well
 
 A bot that reads only `strength` and `health` will lose to one that reads the
-rest. Four things are worth building in, and `tools/dragon_bot.py` does all of
+rest. Five things are worth building in, and `tools/dragon_bot.py` does all of
 them if you want the code.
 
 **`shield` breaks the obvious kill test.** `health <= strength` is not a kill
@@ -189,6 +199,16 @@ move at 8 health than at 30. Weight it, do not just take it.
 **`taunt` is a body you want on your own side too.** Play it when the opponent
 has more creatures than you or your health is getting short - it buys the turn
 your other creatures need.
+
+**`deathrattle` makes a kill cost something.** The creature you kill hits one of
+*your* creatures back for `deathrattleDamage` on the way out, and you do not get
+to choose which one. So a killable creature with a deathrattle is worth less to
+kill than the same body without one, and the cheapest answer is often to leave it
+alone and hit something else. Two things follow. Only the *kill* sets it off, so
+breaking a shield, or trading in without finishing the creature, is free. And the
+damage lands on your own field, so when you attack with your only creature you
+know exactly where it will go - check that your attacker lives through both the
+trade and the death before you swing.
 
 Keywords also make a creature worth more than its numbers when you decide what
 to trade. A 3/3 with `taunt` and `lifesteal` is a better kill than a 4/4 with

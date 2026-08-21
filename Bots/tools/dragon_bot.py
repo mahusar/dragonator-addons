@@ -128,6 +128,10 @@ def decide(board):
     if swing:
         return swing
 
+    spell = choose_spell(board)
+    if spell:
+        return spell
+
     play = choose_creature(board)
     if play:
         return play
@@ -137,6 +141,213 @@ def decide(board):
         return attack
 
     return "end"
+
+
+def choose_spell(board):
+    mana = board.get("you", {}).get("mana", 0)
+
+    best = None
+    best_score = 0
+
+    for card in board.get("hand", []):
+        if card.get("kind") != "spell":
+            continue
+
+        cost = card.get("cost", 0)
+        if cost > mana:
+            continue
+
+        if card.get("destroys"):
+            move, score = removal(board, card, cost)
+        elif card.get("healthChange", 0) < 0:
+            move, score = damage(board, card, cost)
+        elif card.get("strengthChange", 0) > 0:
+            move, score = buff(board, card, cost)
+        elif card.get("healthChange", 0) > 0:
+            move, score = repair(board, card, cost)
+        elif card.get("cardDraw", 0) > 0:
+            move, score = refill(board, card, cost, mana)
+        else:
+            move, score = None, 0
+
+        if move is None or score <= best_score:
+            continue
+
+        best, best_score = move, score
+
+    return best
+
+
+def removal(board, card, cost):
+    best, score = None, 0
+
+    for enemy in board.get("enemyField", []):
+        if not enemy.get("targetable") or enemy.get("shield"):
+            continue
+        if walled(board) and not enemy.get("taunt"):
+            continue
+        if not reaches(card, enemy):
+            continue
+
+        weight = body(enemy)
+        if weight < 12:
+            continue
+
+        worth_it = 40 + weight - cost * 2
+        if worth_it <= score:
+            continue
+
+        score, best = worth_it, aimed(card, enemy)
+
+    return best, score
+
+
+def damage(board, card, cost):
+    hit = -card.get("healthChange", 0)
+    if hit <= 0:
+        return None, 0
+
+    if not card.get("targeted"):
+        affects = card.get("affects")
+        if affects not in ("enemies", "random"):
+            return None, 0
+
+        touched = 0
+        kills = 0
+
+        for enemy in board.get("enemyField", []):
+            if enemy.get("health", 0) <= 0 or not reaches(card, enemy):
+                continue
+            touched += 1
+            if enemy.get("health", 0) <= hit and not enemy.get("shield"):
+                kills += 1
+
+        if touched == 0:
+            return None, 0
+
+        if affects == "random":
+            bolts = max(1, card.get("bolts", 1))
+            score = bolts * hit * 2 + (10 if kills else 0) - cost
+            return ("cast %d" % card["index"], score) if score > 0 else (None, 0)
+
+        if kills == 0 and touched < 2:
+            return None, 0
+
+        return "cast %d" % card["index"], kills * 20 + touched * 4 - cost
+
+    best, score = None, 0
+
+    for enemy in board.get("enemyField", []):
+        if not enemy.get("targetable") or enemy.get("shield"):
+            continue
+        if walled(board) and not enemy.get("taunt"):
+            continue
+
+        if not reaches(card, enemy):
+            continue
+
+        health = enemy.get("health", 0)
+        if health <= 0 or health > hit:
+            continue
+
+        worth_it = 20 + body(enemy) - cost
+        if worth_it <= score:
+            continue
+
+        score, best = worth_it, aimed(card, enemy)
+
+    return best, score
+
+
+def buff(board, card, cost):
+    lift = card.get("strengthChange", 0)
+
+    if not card.get("targeted"):
+        wide = len([c for c in board.get("yourField", [])
+                    if c.get("health", 0) > 0 and reaches(card, c)])
+        if wide < 3:
+            return None, 0
+
+        score = wide * lift * 3 - cost
+        return ("cast %d" % card["index"], score) if score > 0 else (None, 0)
+
+    best, score = None, 0
+
+    for mine in board.get("yourField", []):
+        if mine.get("health", 0) <= 0 or not reaches(card, mine):
+            continue
+
+        worth_it = lift * 3 + body(mine) // 4 - cost
+        if worth_it <= score:
+            continue
+
+        score, best = worth_it, aimed(card, mine)
+
+    return best, score
+
+
+def repair(board, card, cost):
+    heal = card.get("healthChange", 0)
+    if heal <= 0:
+        return None, 0
+
+    best, score = None, 0
+
+    for mine in board.get("yourField", []):
+        health = mine.get("health", 0)
+        printed = mine.get("maxHealth", 0)
+        if health <= 0 or printed <= 0 or not reaches(card, mine):
+            continue
+
+        used = min(heal, printed - health)
+        if used < 3:
+            continue
+
+        worth_it = used * 2 - cost
+        if worth_it <= score:
+            continue
+
+        score, best = worth_it, aimed(card, mine)
+
+    return best, score
+
+
+def refill(board, card, cost, mana):
+    drawn = card.get("cardDraw", 0)
+    held = len(board.get("hand", []))
+
+    if drawn <= 0 or held >= 7:
+        return None, 0
+    if held > 2 and affordable(board, mana - cost):
+        return None, 0
+
+    score = 4 + drawn * 2 - cost
+
+    return ("cast %d" % card["index"], score) if score > 0 else (None, 0)
+
+
+def reaches(spell, creature):
+    only = spell.get("onlyTribe", "")
+    if not only:
+        return True
+
+    tribe = creature.get("tribe", "")
+
+    return tribe == only or tribe == "all"
+
+
+def affordable(board, mana):
+    for card in board.get("hand", []):
+        if card.get("kind") != "creature":
+            continue
+        if card.get("cost", 0) <= mana:
+            return True
+
+    return False
+
+
+def aimed(card, target):
+    return "cast %d %d" % (card["index"], target["netId"])
 
 
 def ready(board):
@@ -233,11 +444,48 @@ def choose_creature(board):
         if card.get("deathrattle"):
             score += card.get("deathrattleDamage", 0) + 2
 
+        score += cry_worth(board, card)
+
         if best_score is None or score > best_score:
             best_score = score
             best = card
 
     return None if best is None else "play %d" % best["index"]
+
+
+def cry_worth(board, card):
+    cry = card.get("battlecry")
+    if not cry:
+        return 0
+
+    worth = cry.get("cardDraw", 0) * 4
+
+    hit = -cry.get("healthChange", 0)
+
+    if hit > 0:
+        reach = 0
+        kills = 0
+
+        for enemy in board.get("enemyField", []):
+            if enemy.get("health", 0) <= 0:
+                continue
+            reach += 1
+            if enemy.get("health", 0) <= hit and not enemy.get("shield"):
+                kills += 1
+
+        if reach > 0:
+            if cry.get("affects") == "enemies":
+                landings = reach
+            else:
+                landings = max(1, cry.get("bolts", 1))
+
+            worth += hit * landings + kills * 6
+
+    lift = cry.get("strengthChange", 0)
+    if lift > 0:
+        worth += lift * 2
+
+    return worth
 
 
 def legal_targets(board):

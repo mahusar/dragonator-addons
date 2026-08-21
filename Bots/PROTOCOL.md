@@ -150,8 +150,9 @@ the only thing your bot ever receives.
 | `targetable` | whether that seat or creature may be attacked at all |
 
 Cards in `hand` always carry `index`, `cost` and `kind`. `kind` is `creature`,
-`spell` or `other`. Only creatures can be played today, so a bot may ignore the
-rest. Creatures also carry `strength`, `health`, `charge` and `taunt`.
+`spell` or `other`. Creatures also carry `strength`, `health`, `charge` and
+`taunt`. Spells carry `targeted`, `affects`, `healthChange`, `strengthChange` and
+`cardDraw` - see **Casting a spell** below.
 
 Cards on a field carry `netId`, `strength`, `health`, `waitTurn`, `attacked`,
 `taunt`, `lifesteal`, `shield`, `deathrattle`, `deathrattleDamage` and
@@ -230,6 +231,49 @@ turn:
 
 A newly played creature has `waitTurn` 1 and cannot attack until your next turn,
 unless it has `charge`.
+
+## Casting a spell
+
+A spell is played with `cast`, not `play`. `play` is refused for a spell and
+`cast` is refused for a creature.
+
+```
+cast <handIndex>              an untargeted spell
+cast <handIndex> <netId>      a spell that names one creature
+```
+
+The card in hand tells you which form to send:
+
+| field | meaning |
+|---|---|
+| `targeted` | if true you MUST name a creature, and only a creature - never a seat |
+| `affects` | who an untargeted spell reaches: `enemies`, `friendlies`, `random` or `owner` |
+| `healthChange` | negative is damage, positive is healing |
+| `strengthChange` | permanent change to a creature's strength |
+| `cardDraw` | cards the caster draws |
+
+```json
+{ "index": 3, "cardId": "21", "name": "21_Scorch", "cost": 1,
+  "kind": "spell", "targeted": true, "affects": "enemies",
+  "healthChange": -2, "strengthChange": 0, "cardDraw": 0 }
+```
+
+### The rules the server holds you to
+
+- **Taunt applies to a targeted spell exactly as it applies to an attack.** If the
+  opponent's `taunt` count is above 0, a harmful targeted spell may only name a
+  creature whose `taunt` is true.
+- **An untargeted spell ignores taunt**, because it chooses nothing. That is what
+  makes an area spell the answer to a taunt wall.
+- A harmful spell cannot be aimed at your own creature, and a helpful one cannot
+  reach the opponent's.
+- **A shield absorbs spell damage** the same way it absorbs an attack, and is then
+  spent. `health <= -healthChange` is not a kill when `shield` is true.
+- `affects: "random"` draws its target from the sealed match seed, so the pick is
+  reproducible from the replay and is not the operator's choice.
+
+Spells never reach a seat, only creatures, so there is no burn-the-face plan to
+build. Removal is for the board.
 
 ## Signing the match receipt
 
